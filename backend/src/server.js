@@ -17,31 +17,33 @@ app.use(express.json({ limit: "5mb" })); // req.body
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
+// backend/src/server.js
 
-// cors
 const allowedOrigins = (ENV.CLIENT_URL || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow server-to-server / curl (no origin)
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow server-to-server / curl
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS: " + origin));
+  },
+  credentials: true,
+};
 
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
-      return callback(new Error("Not allowed by CORS: " + origin));
-    },
-    credentials: true,
-  }),
-);
+// remove the second CORS block you have after routes
 
-// preflight (important)
-app.options("*", cors());
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+
+// cors
 // cors
 
 // make ready for deployment

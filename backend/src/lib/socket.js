@@ -8,12 +8,32 @@ import { socketAuthMiddleware } from "../middleware/socket.auth.middleware.js";
 const app = express();
 const server = http.createServer(app);
 
+// backend/src/lib/socket.js
+
+const allowedOrigins = (ENV.CLIENT_URL || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const io = new Server(server, {
   cors: {
-    origin: [ENV.CLIENT_URL],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS: " + origin));
+    },
     credentials: true,
   },
 });
+
+// const io = new Server(server, {
+//   cors: {
+//     origin: [ENV.CLIENT_URL],
+//     credentials: true,
+//   },
+// });
 
 // apply authentication middleware to all socket connections
 io.use(socketAuthMiddleware);
