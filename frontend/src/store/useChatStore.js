@@ -32,7 +32,6 @@ export const useChatStore = create((set, get) => ({
       set({ isUsersLoading: false });
     }
   },
-
   getMyChatPartners: async () => {
     set({ isUsersLoading: true });
     try {
@@ -86,5 +85,42 @@ export const useChatStore = create((set, get) => ({
       set({ messages: messages });
       toast.error(error.response?.data?.message || "Something went wrong");
     }
+  },
+
+  subscribeToMessages: () => {
+    const { selectedUser, isSoundEnabled } = get();
+    if (!selectedUser) return;
+
+    const socket = useAuthStore.getState().socket;
+
+    socket.on("newMessage", (newMessage) => {
+      // 1. Always get the freshest state directly from the store
+      const { isSoundEnabled, selectedUser, messages } = get();
+
+      // 2. Play the sound for ANY incoming message (if the user has sound turned on)
+      if (isSoundEnabled) {
+        const notificationSound = new Audio("/sounds/notification.mp3");
+        notificationSound.currentTime = 0; // reset to start
+        notificationSound
+          .play()
+          .catch((e) => console.log("Audio play failed:", e));
+      }
+
+      // 3. Check if the message belongs to the currently open chat window
+      // (Optional chaining `?.` prevents crashes if no user is selected)
+      const isMessageSentFromSelectedUser =
+        newMessage.senderId === selectedUser?._id;
+
+      // 4. If it's from someone else, stop here (don't add it to the active screen)
+      if (!isMessageSentFromSelectedUser) return;
+
+      // 5. If it is from the selected user, update the chat screen
+      set({ messages: [...messages, newMessage] });
+    });
+  },
+
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+    socket.off("newMessage");
   },
 }));
