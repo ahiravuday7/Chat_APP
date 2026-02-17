@@ -12,7 +12,7 @@ import { app, server } from "./lib/socket.js";
 const __dirname = path.resolve();
 
 const PORT = ENV.PORT || 3000;
-
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "5mb" })); // req.body
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
@@ -24,19 +24,22 @@ const allowedOrigins = (ENV.CLIENT_URL || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow server-to-server / curl
-    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error("Not allowed by CORS: " + origin));
-  },
-  credentials: true,
-};
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow Postman
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS: " + origin));
+    },
+    credentials: true,
+  }),
+);
+
+app.options("*", cors());
 
 // remove the second CORS block you have after routes
 
