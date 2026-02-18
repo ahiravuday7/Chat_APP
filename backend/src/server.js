@@ -27,20 +27,21 @@ const allowedOrigins = (ENV.CLIENT_URL || "")
   .filter(Boolean);
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
     if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      return cb(null, true);
     }
-    return callback(new Error("Not allowed by CORS: " + origin));
+    return cb(new Error("Not allowed by CORS: " + origin));
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options("*", cors(corsOptions)); // preflight
 
-// keep routes after this
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
