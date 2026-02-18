@@ -19,32 +19,32 @@ app.use(cookieParser());
 
 // backend/src/server.js
 
+// backend/src/server.js
+
 const allowedOrigins = (ENV.CLIENT_URL || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow Postman
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS: " + origin));
+  },
+  credentials: true,
+};
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
-      return callback(new Error("Not allowed by CORS: " + origin));
-    },
-    credentials: true,
-  }),
-);
-
-app.options("*", cors());
-
-// remove the second CORS block you have after routes
-
+// keep routes after this
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+
+// remove the second CORS block you currently have below routes
 
 // cors
 // cors
