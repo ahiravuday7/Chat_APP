@@ -4,7 +4,9 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
+  import.meta.env.MODE === "development"
+    ? import.meta.env.VITE_SOCKET_URL
+    : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -36,7 +38,11 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Account created successfully!");
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Signup failed. Please try again.";
+      toast.error(message);
     } finally {
       set({ isSigningUp: false });
     }
@@ -52,7 +58,11 @@ export const useAuthStore = create((set, get) => ({
 
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Login failed. Please try again.";
+      toast.error(message);
     } finally {
       set({ isLoggingIn: false });
     }
@@ -77,7 +87,11 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log("Error in update profile:", error);
-      toast.error(error.response.data.message);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Profile update failed. Please try again.";
+      toast.error(message);
     }
   },
 

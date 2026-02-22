@@ -6,10 +6,11 @@ import User from "../models/User.js";
 export const getAllContacts = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    console.log("contact:", loggedInUserId);
     const filteredUsers = await User.find({
       _id: { $ne: loggedInUserId },
     }).select("-password");
-
+    console.log("filteredUsers:", filteredUsers);
     res.status(200).json(filteredUsers);
   } catch (error) {
     console.log("Error in getAllContacts:", error);
